@@ -2,89 +2,104 @@ package users;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
 import java.time.LocalDate;
-import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class UserServiceTestMockito {
 
-    User user = Mockito.mock(User.class);
-    UserService userService = Mockito.mock(UserService.class);
+    User user;
+    PeselService peselService;
+    UserService userService;
 
     @BeforeEach
-    void createInstanceOfUser() {
-        user = Mockito.mock(User.class);
+    void createInstanceOfUserAndMockedPeselService() {
+        peselService = Mockito.mock(PeselService.class);
+        userService = new UserService(peselService, new DateService());
+        user = new User();
+    }
+
+    //ten test nie przechodzi, rzuca fail message, tak ma być
+    @Test
+    void validateUserDataTest1() {
+        Mockito.when(peselService.isValid("1234")).thenReturn(true);
+        Mockito.when(peselService.getDateOfBirth("1234")).thenReturn(LocalDate.of(1944, 12, 12));
+        Mockito.when(peselService.getSex("1234")).thenReturn(Sex.FEMALE);
+        user.pesel = "1234";
+        user.dateOfBirth = LocalDate.of(1944, 12, 12);
+        user.sex = Sex.FEMALE;
+        try {
+            userService.validateUserData(user);
+            fail("Exception hasn't been catched");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Pesel is invalid", e.getMessage());
+        }
     }
 
     @Test
-    void validateUserDataTest1() {
-        user.pesel = "123456";
-        Mockito.doThrow(IllegalArgumentException.class).when(userService).validateUserData(user);
-        assertThatThrownBy(() -> userService.validateUserData(user))
-                .isInstanceOf(IllegalArgumentException.class);
-        Mockito.verify(userService, Mockito.times(1)).validateUserData(user);
+    void validateUserDataTest2() {
+        Mockito.when(peselService.isValid("1234")).thenReturn(false);
+        Mockito.when(peselService.getDateOfBirth("1234")).thenReturn(LocalDate.of(1944, 12, 12));
+        Mockito.when(peselService.getSex("1234")).thenReturn(Sex.FEMALE);
+        user.pesel = "1234";
+        user.dateOfBirth = LocalDate.of(1944, 12, 12);
+        user.sex = Sex.FEMALE;
+        try {
+            userService.validateUserData(user);
+            fail("Exception hasn't been catched");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Pesel is invalid", e.getMessage());
+        }
     }
 
-    @ParameterizedTest
-    @MethodSource("dataForValidateUserDataTest2")
-    void validateUserDataTest2(String pesel, LocalDate dateOfBirth) {
-        user.pesel = pesel;
-        user.dateOfBirth = dateOfBirth;
-        Mockito.doThrow(IllegalArgumentException.class).when(userService).validateUserData(user);
-        assertThatThrownBy(() -> userService.validateUserData(user))
-                .isInstanceOf(IllegalArgumentException.class);
-        Mockito.verify(userService, Mockito.times(1)).validateUserData(user);
+    @Test
+    void validateUserDataTest3() {
+        Mockito.when(peselService.isValid("1234")).thenReturn(true);
+        Mockito.when(peselService.getDateOfBirth("1234")).thenReturn(LocalDate.of(1944, 12, 12));
+        Mockito.when(peselService.getSex("1234")).thenReturn(Sex.FEMALE);
+        user.pesel = "1234";
+        user.dateOfBirth = LocalDate.of(2012, 12, 12);
+        user.sex = Sex.FEMALE;
+        try {
+            userService.validateUserData(user);
+            fail("Exception hasn't been catched");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Date of birth is inconsistent with pesel", e.getMessage());
+        }
     }
 
-    static Stream<Arguments> dataForValidateUserDataTest2() {
-        return Stream.of(
-                Arguments.arguments("44051401458", LocalDate.of(1945, 05, 14)),
-                Arguments.arguments("84011201654", LocalDate.of(1985, 1, 12))
-        );
+    @Test
+    void validateUserDataTest4() {
+        Mockito.when(peselService.isValid("1234")).thenReturn(true);
+        Mockito.when(peselService.getDateOfBirth("1234")).thenReturn(LocalDate.of(1944, 12, 12));
+        Mockito.when(peselService.getSex("1234")).thenReturn(Sex.FEMALE);
+        user.pesel = "1234";
+        user.dateOfBirth = LocalDate.of(1944, 12, 12);
+        user.sex = Sex.MALE;
+        try {
+            userService.validateUserData(user);
+            fail("Exception hasn't been catched");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Sex is inconsistent with pesel", e.getMessage());
+        }
     }
 
-    @ParameterizedTest
-    @MethodSource("dataForValidateUserDataTest3")
-    void validateUserData3(String pesel, LocalDate dateOfBirth, Sex sex) {
-        user.pesel = pesel;
-        user.dateOfBirth = dateOfBirth;
-        user.sex = sex;
-        Mockito.doThrow(IllegalArgumentException.class).when(userService).validateUserData(user);
-        assertThatThrownBy(() -> userService.validateUserData(user))
-                .isInstanceOf(IllegalArgumentException.class);
-        Mockito.verify(userService, Mockito.times(1)).validateUserData(user);
-    }
-
-    static Stream<Arguments> dataForValidateUserDataTest3() {
-        return Stream.of(
-                Arguments.arguments("44051401458", LocalDate.of(1944, 05, 14), Sex.FEMALE),
-                Arguments.arguments("84011201654", LocalDate.of(1984, 1, 12), Sex.FEMALE)
-        );
-    }
-
-    @ParameterizedTest
-    @MethodSource("dataForValidateUserData4")
-    void validateUserDataTest4(String pesel, LocalDate dateOfBirth, Sex sex) {
-        user.pesel = pesel;
-        user.dateOfBirth = dateOfBirth;
-        user.sex = sex;
-        Mockito.doThrow(IllegalArgumentException.class).when(userService).validateUserData(user);
-        assertThatThrownBy(() -> userService.validateUserData(user))
-                .isInstanceOf(IllegalArgumentException.class);
-        Mockito.verify(userService, Mockito.times(1)).validateUserData(user);
-    }
-
-    static Stream<Arguments> dataForValidateUserData4() {
-        return Stream.of(
-                Arguments.arguments("20251401458", LocalDate.of(2020, 05, 14), Sex.MALE),
-                Arguments.arguments("84011201654", LocalDate.of(1984, 1, 12), Sex.MALE)
-                //w przeciwieństwie do testu bez użycia mocka, w 2 przypadku nie wyświetli fail message, tak ma być
-        );
+    @Test
+    void validateUserDataTest5() {
+        Mockito.when(peselService.isValid("1234")).thenReturn(true);
+        Mockito.when(peselService.getDateOfBirth("1234")).thenReturn(LocalDate.of(2020, 12, 12));
+        Mockito.when(peselService.getSex("1234")).thenReturn(Sex.FEMALE);
+        user.pesel = "1234";
+        user.dateOfBirth = LocalDate.of(2020, 12, 12);
+        user.sex = Sex.FEMALE;
+        try {
+            userService.validateUserData(user);
+            fail("Exception hasn't been catched");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Date of birth is after today", e.getMessage());
+        }
     }
 }

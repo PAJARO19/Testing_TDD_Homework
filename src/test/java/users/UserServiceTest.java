@@ -9,8 +9,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.time.LocalDate;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 class UserServiceTest {
 
@@ -40,6 +39,7 @@ class UserServiceTest {
         user.dateOfBirth = dateOfBirth;
         try {
             userService.validateUserData(user);
+            fail("Exception hasn't been catched");
         } catch (IllegalArgumentException e) {
             assertEquals("Date of birth is inconsistent with pesel", e.getMessage());
         }
@@ -48,7 +48,10 @@ class UserServiceTest {
     static Stream<Arguments> dataForValidateUserDataTest2() {
         return Stream.of(
                 Arguments.arguments("44051401458", LocalDate.of(1945, 05, 14)),
-                Arguments.arguments("84011201654", LocalDate.of(1985, 1, 12))
+                Arguments.arguments("84011201654", LocalDate.of(1985, 1, 12)),
+                Arguments.arguments("02271409867", LocalDate.of(2003, 07, 14)),
+                Arguments.arguments("00211256315", LocalDate.of(2000, 02, 12)),
+                Arguments.arguments("20321246215", LocalDate.of(2020, 12, 22))
         );
     }
 
@@ -60,6 +63,7 @@ class UserServiceTest {
         user.sex = sex;
         try {
             userService.validateUserData(user);
+            fail("Exception hasn't been catched");
         } catch (IllegalArgumentException e) {
             assertEquals("Sex is inconsistent with pesel", e.getMessage());
         }
@@ -93,5 +97,4 @@ class UserServiceTest {
                 //w 2 przypadku wyświetli fail message, tak ma być
         );
     }
-
 }
